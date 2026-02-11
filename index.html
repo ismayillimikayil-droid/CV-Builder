@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Builder | Rezi Clone</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        'primary-dark': '#4f46e5',
+                        secondary: '#10b981',
+                        slate: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="bg-gray-50 text-gray-900 antialiased h-screen overflow-hidden">
+
+    <div class="app-layout h-full">
+        <!-- 1. LEFT SIDEBAR (Navigation) -->
+        <aside class="sidebar h-full flex flex-col bg-white border-r border-gray-200">
+            <!-- Brand -->
+            <div class="h-16 flex items-center px-6 border-b border-gray-100">
+                <div class="w-8 h-8 bg-black rounded flex items-center justify-center text-white font-bold text-lg mr-3">R</div>
+                <h1 class="text-lg font-bold tracking-tight text-gray-900">ResumAI</h1>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="flex-1 overflow-y-auto py-4">
+                <div onclick="switchTab('personal')" id="nav-personal" class="nav-item active">
+                    <i data-lucide="user" class="w-4 h-4"></i>
+                    <span>Contact Info</span>
+                </div>
+                <div onclick="switchTab('experience')" id="nav-experience" class="nav-item">
+                    <i data-lucide="briefcase" class="w-4 h-4"></i>
+                    <span>Experience</span>
+                </div>
+                <div onclick="switchTab('education')" id="nav-education" class="nav-item">
+                    <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                    <span>Education</span>
+                </div>
+                <div onclick="switchTab('skills')" id="nav-skills" class="nav-item">
+                    <i data-lucide="wrench" class="w-4 h-4"></i>
+                    <span>Skills</span>
+                </div>
+            </nav>
+
+            <!-- Bottom Actions -->
+            <div class="p-4 border-t border-gray-100 space-y-2">
+                <button onclick="saveToCloud()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition">
+                    <i data-lucide="cloud-upload" class="w-4 h-4"></i> Save
+                </button>
+                <button onclick="loadFromCloud()" class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md transition">
+                    <i data-lucide="cloud-download" class="w-4 h-4"></i> Load
+                </button>
+            </div>
+        </aside>
+
+        <!-- 2. CENTER PANEL (Editor) -->
+        <main class="editor-panel flex flex-col h-full bg-white relative">
+            
+            <!-- Personal Section -->
+            <div id="section-personal" class="section-content h-full flex flex-col">
+                <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Personal Details</h2>
+                        <p class="text-sm text-gray-500">Your basic contact information.</p>
+                    </div>
+                </div>
+                <div class="p-8 space-y-6 flex-1 overflow-y-auto">
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            <label class="rezi-label">Full Name</label>
+                            <input type="text" data-model="personal.fullName" class="rezi-input" placeholder="e.g. John Doe">
+                        </div>
+                        <div>
+                            <label class="rezi-label">Headline</label>
+                            <input type="text" data-model="personal.headline" class="rezi-input" placeholder="e.g. Senior Software Engineer">
+                        </div>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="rezi-label">Email</label>
+                                <input type="email" data-model="personal.email" class="rezi-input" placeholder="john@example.com">
+                            </div>
+                            <div>
+                                <label class="rezi-label">Phone</label>
+                                <input type="text" data-model="personal.phone" class="rezi-input" placeholder="+1 555 0101">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="rezi-label">Location</label>
+                            <input type="text" data-model="personal.location" class="rezi-input" placeholder="City, Country">
+                        </div>
+                         <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="rezi-label">LinkedIn</label>
+                                <input type="text" data-model="personal.linkedin" class="rezi-input" placeholder="linkedin.com/in/john">
+                            </div>
+                            <div>
+                                <label class="rezi-label">Website</label>
+                                <input type="text" data-model="personal.website" class="rezi-input" placeholder="yourportfolio.com">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Experience Section -->
+            <div id="section-experience" class="section-content hidden h-full flex flex-col">
+                <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Experience</h2>
+                        <p class="text-sm text-gray-500">Add your work history.</p>
+                    </div>
+                    <button onclick="addExperience()" class="btn-primary flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add Position
+                    </button>
+                </div>
+                <div id="experience-list" class="p-8 space-y-4 flex-1 overflow-y-auto">
+                    <!-- Dynamic Items -->
+                </div>
+            </div>
+
+            <!-- Education Section -->
+            <div id="section-education" class="section-content hidden h-full flex flex-col">
+                <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white/95 backdrop-blur z-10">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Education</h2>
+                        <p class="text-sm text-gray-500">Add your academic background.</p>
+                    </div>
+                    <button onclick="addEducation()" class="btn-primary flex items-center gap-2">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Add Education
+                    </button>
+                </div>
+                <div id="education-list" class="p-8 space-y-4 flex-1 overflow-y-auto">
+                    <!-- Dynamic Items -->
+                </div>
+            </div>
+
+            <!-- Skills Section -->
+            <div id="section-skills" class="section-content hidden h-full flex flex-col">
+                <div class="px-8 py-6 border-b border-gray-100 sticky top-0 bg-white/95 backdrop-blur z-10">
+                    <h2 class="text-xl font-bold text-gray-900">Skills</h2>
+                    <p class="text-sm text-gray-500">List your technical skills.</p>
+                </div>
+                <div class="p-8 flex-1 overflow-y-auto">
+                    <label class="rezi-label">Skills (Comma Separated)</label>
+                    <textarea data-model="skills" class="rezi-input h-40 resize-none" placeholder="Java, Python, Leadership, Project Management..."></textarea>
+                    <div class="mt-4 p-4 bg-gray-50 rounded-md border border-gray-100">
+                        <p class="text-xs text-gray-500 font-medium uppercase mb-2">Suggestions</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-medium text-gray-600 cursor-pointer hover:border-gray-400">Project Management</span>
+                            <span class="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-medium text-gray-600 cursor-pointer hover:border-gray-400">Strategic Planning</span>
+                            <span class="px-2 py-1 bg-white border border-gray-200 rounded text-xs font-medium text-gray-600 cursor-pointer hover:border-gray-400">Team Leadership</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 3. RIGHT PANEL (Preview) -->
+        <aside class="preview-panel custom-scrollbar relative">
+             <div class="absolute top-6 right-6 z-20">
+                <button onclick="window.print()" class="btn-primary shadow-lg flex items-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4"></i> Download PDF
+                </button>
+            </div>
+            
+            <div id="resume-preview-content" class="resume-sheet">
+                <!-- Preview Content -->
+            </div>
+        </aside>
+
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
