@@ -423,20 +423,25 @@
             e.preventDefault();
             const btn = document.getElementById('pay-btn');
 
-            btn.innerText = 'Processing...';
+            let checkoutUrl = '';
+            if (currentPlan === 'monthly') {
+                checkoutUrl = 'https://cvmakerly.lemonsqueezy.com/buy/pri_01khbedtb367hwq2my92tqpv7w';
+            } else {
+                checkoutUrl = 'https://cvmakerly.lemonsqueezy.com/buy/pri_01khbefy3c92k9x9tk7tm4ae16';
+            }
+
+            // Pre-fill email if available
+            const email = document.getElementById('customer-email').value;
+            if (email) {
+                checkoutUrl += `?checkout[email]=${encodeURIComponent(email)}`;
+            }
+
+            btn.innerText = 'Redirecting to Secure Checkout...';
             btn.disabled = true;
-            btn.classList.add('opacity-75');
+            btn.classList.add('opacity-75', 'cursor-wait');
 
-            setTimeout(() => {
-                btn.innerText = 'Success!';
-                btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                btn.classList.add('bg-green-600');
-
-                setTimeout(() => {
-                    localStorage.setItem('userPlan', 'pro');
-                    window.location.href = 'dashboard.html';
-                }, 1000);
-            }, 2000);
+            // Redirect
+            window.location.href = checkoutUrl;
         }
 
         init();
