@@ -261,6 +261,7 @@
 
         // Initialize Paddle (Replace 'test_...' with your actual Client Token)
         // You can find this in Paddle Dashboard > Developer Tools > Authentication
+        Paddle.Environment.set('production'); // Explicitly set for live tokens
         Paddle.Initialize({
             token: 'live_f303461a6730f427737333f2feb' // TODO: REPLACE THIS WITH USER'S CLIENT TOKEN
         });
